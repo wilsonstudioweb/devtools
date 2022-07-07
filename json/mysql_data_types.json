@@ -1,0 +1,166 @@
+[
+	{
+		"category": "string",
+		"data_types": [
+			{
+				"data_type": "CHAR",
+				"desc": "A fixed-length nonbinary (character) string"
+			},
+			{
+				"data_type": "VARCHAR",
+				"desc": "A variable-length non-binary string"
+			},
+			{
+				"data_type": "BINARY",
+				"desc": "A fixed-length binary string"
+			},
+			{
+				"data_type": "VARBINARY",
+				"desc": "A variable-length binary string"
+			},
+			{
+				"data_type": "TINYBLOB",
+				"desc": "A very small BLOB (binary large object)"
+			},
+			{
+				"data_type": "BLOB",
+				"desc": "A small BLOB"
+			},
+			{
+				"data_type": "MEDIUMBLOB",
+				"desc": "A medium-sized BLOB"
+			},
+			{
+				"data_type": "LONGBLOB",
+				"desc": "A large BLOB"
+			},
+			{
+				"data_type": "TINYTEXT",
+				"desc": "A very small non-binary string"
+			},
+			{
+				"data_type": "TEXT",
+				"desc": "A small non-binary string"
+			},
+			{
+				"data_type": "MEDIUMTEXT",
+				"desc": "A medium-sized non-binary string"
+			},
+			{
+				"data_type": "LONGTEXT",
+				"desc": "A large non-binary string"
+			},
+			{
+				"data_type": "ENUM",
+				"desc": "An enumeration; each column value may be assigned one enumeration member"
+			},
+			{
+				"data_type": "SET",
+				"desc": "A set; each column value may be assigned zero or more SET members"
+			}
+		]
+	},
+	{
+		"category": "numeric",
+		"data_types": [
+			{
+				"data_type": "TINYINT",
+				"desc": "A very small integer"
+			},
+			{
+				"data_type": "SMALLINT",
+				"desc": "A small integer"
+			},
+			{
+				"data_type": "MEDIUMINT",
+				"desc": "A medium-sized integer"
+			},
+			{
+				"data_type": "INT",
+				"desc": "A standard integer"
+			},
+			{
+				"data_type": "BIGINT",
+				"desc": "A large integer"
+			},
+			{
+				"data_type": "DECIMAL",
+				"desc": "A fixed-point number"
+			},
+			{
+				"data_type": "FLOAT",
+				"desc": "A single-precision floating point number"
+			},
+			{
+				"data_type": "DOUBLE",
+				"desc": "A double-precision floating point number"
+			},
+			{
+				"data_type": "BIT",
+				"desc": "A bit field"
+			}
+		]
+	},
+	{
+		"category": "date_time",
+		"data_types": [
+			{
+				"data_type": "DATE",
+				"desc": "A date value in CCYY-MM-DD format"
+			},
+			{
+				"data_type": "TIME",
+				"desc": "A time value in hh:mm:ss format"
+			},
+			{
+				"data_type": "DATETIME",
+				"desc": "A date and time value inCCYY-MM-DD hh:mm:ssformat"
+			},
+			{
+				"data_type": "TIMESTAMP",
+				"desc": "A timestamp value in CCYY-MM-DD hh:mm:ss format"
+			},
+			{
+				"data_type": "YEAR",
+				"desc": "A year value in CCYY or YY format "
+			}
+		]
+	},
+	{
+		"category": "spatial",
+		"data_types": [
+			{
+				"data_type": "GEOMETRY",
+				"desc": "A spatial value of any type"
+			},
+			{
+				"data_type": "POINT",
+				"desc": "A point (a pair of X-Y coordinates)"
+			},
+			{
+				"data_type": "LINESTRING",
+				"desc": "A curve (one or more POINT values)"
+			},
+			{
+				"data_type": "POLYGON",
+				"desc": "A polygon"
+			},
+			{
+				"data_type": "GEOMETRYCOLLECTION",
+				"desc": "A collection of GEOMETRYvalues"
+			},
+			{
+				"data_type": "MULTILINESTRING",
+				"desc": "A collection of LINESTRINGvalues"
+			},
+			{
+				"data_type": "MULTIPOINT",
+				"desc": "A collection of POINTvalues"
+			},
+			{
+				"data_type": "MULTIPOLYGON",
+				"desc": "A collection of POLYGONvalues"
+			}
+		]
+	}
+]

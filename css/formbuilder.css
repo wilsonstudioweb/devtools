@@ -1,0 +1,22 @@
+#app * { transition: all .5s ease; }
+
+body select#select-table {
+    height:20vh;
+}
+body #select-table:focus {
+   height:40vh;
+}
+body select#table-def {
+    height:20vh;
+}
+body select#table-def:focus {
+    height:50vh;
+}
+#leftcol label { text-transform:uppercase; margin-bottom:0;
+font-size:12px; }
+
+.ghost {
+    border-left: 5px solid rgb(134, 206, 156);
+    box-shadow: 10px 10px 5px -1px rgba(0, 0, 0, 0.14);
+    opacity: 0.7;
+  }
