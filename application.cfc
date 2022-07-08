@@ -1,7 +1,7 @@
 component {
 	/* Available application.cfc variable refernce --> https://helpx.adobe.com/coldfusion/cfml-reference/application-cfc-reference/application-variables.html */
-	this.version = "beta v0.002asdf";
-	this.name = 'MNGLR' & ' ' & this.version;
+	this.version = "beta v0.001";
+	this.name = 'DEVTOOLS' & ' ' & this.version;
 	this.sitename = 'DEV Toolbox';
 	this.companyname = 'WilsonStudioWeb';
 	obj.Datasources = CreateObject("java", "coldfusion.server.ServiceFactory").DataSourceService.getNames()
@@ -9,7 +9,7 @@ component {
 	this.layout = 'main';
 	/*
 		this.datasources = { 
-			swinglifestyle: { database: "dbname",  host: "hostaddress", port: "1433",  driver: "MSSQLServer", username: "user", password: "XXXXXXXXXXXX" }  
+			mydatasourcename: { database: "dbname",  host: "hostaddress", port: "1433",  driver: "MSSQLServer", username: "user", password: "XXXXXXXXXXXX" }  
 			// Additional Protection against SQL Injection by mapping DSN with specific DB Server Login privledges (Create, Read, Update, Delete).. 
 				R: { database: "<DBName>",  host: "<HostNameOrIP>", port: "<portNumber>",  driver: "MSSQLServer", username: "username", password: "password" },  
 				CRU: { database: "<DBName>",  host: "<HostNameOrIP>", port: "<portNumber>",  driver: "MSSQLServer", username: "username", password: "password" },  
