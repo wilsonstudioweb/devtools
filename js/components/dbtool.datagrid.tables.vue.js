@@ -189,8 +189,6 @@ Vue.component('tables-datagrid', {
 				this.items = r.data;
 				this.pjArray = this.filterAlpha(r.data);
 			});
-
-
 		},
 		tableDef: function(newtable) {
 			this.$root.$emit('tableChange', newtable);

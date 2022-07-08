@@ -1,10 +1,28 @@
 
-const EventBus = new Vue();
 
-
-new Vue({
-	el: '#app',
+Vue.component('form-builder', {
 	require: null,
+	template:`
+		<div class="row">
+                <div class="col-md-3" id="leftcol">
+                    <label><i calss="fa fa-table"></i> Database Tables</label>
+                    <select class="select-table form-control" id="select-table"  @change="getTableDef(table_name)" v-model="table_name" multiple>
+					<option v-for="item in tables" :value="item.TABLE_NAME">{{ item.TABLE_NAME }}  ({{item.RECORD_COUNT}})</option>
+                    </select>
+                    <label> Columns <!---({{ this.table_name[0] }}) ---></label>
+                    <select class="form-control" id="table-def"  @dblclick="addField(column_name)" v-model="column_name" multiple>
+                        <option v-for="r in table_columns"  v-bind:value="r.COLUMN_NAME"  v-bind:column_props="JSON.stringify(r)"> {{ r.COLUMN_NAME }}</option>
+                    </select>
+                </div>
+                <div class="col-md-9">
+					<div id="form_canvas">
+						<draggable v-model="form_canvas" ghost-class="ghost" :sort="true" @end="onEnd" class="row">
+							<div v-for="item in form_canvas" v-html="item.innerHTML" class="form-group col-md-6 draggable" @dblclick=""></div>
+						</draggable>
+					</div>
+                </div>
+            </div>
+	`,
 	data: function() {
 		return {
 			form_type:'vue', 
@@ -31,6 +49,21 @@ new Vue({
 		};
 	},
 	methods: {
+		getTables: function(dsn, filter) {
+			params = {
+				method: 'getTables',
+				returnformat: 'json',
+				queryformat: 'struct',
+				dsn: dsn,
+				filter: filter !== undefined ? filter : '',
+				sort_by: this.sortBy,
+				sort_dir: this.sortDesc ? 'DESC' : 'ASC'
+			};
+			var queryString = Object.keys(params).map((key) => key + '=' + params[key]).join('&');
+			axios.get('/cfcs/dbtool.cfc?' + queryString).then((r) => {
+				this.tables = r.data;
+			});
+		},
 		showEditForm(item){
 			/*
 			console.log(item.querySelector('input:first-of-type').attributes.name.value);
@@ -209,7 +242,7 @@ new Vue({
 			input.placeholder = this.spaceCamelCase(field.COLUMN_NAME);
 			input.className = 'form-control';
 			//input.setAttribute('v-on:click', "this.showEditForm(this)");
-			input.addEventListener('click', this.$root.showEditForm('wtf'));
+			// input.addEventListener('click', this.$root.showEditForm('wtf'));
             // input.value = '#this.' & field.COLUMN_NAME & '#';
             
 			/*
@@ -258,11 +291,15 @@ new Vue({
 		// this.getItems();
 		// this.getDSNs();
 		// this.setDSN(this.dsn);
+		this.getTables();
 	},
 	mounted: function() {
 		this.$root.$on('setDataVars', (d) => {
 			this.totalRecords = d.totalRecords;
 			this.activeTable = d.activeTable;
+		});
+		this.$root.$on('refreshTables', (dsn) => {
+			this.getTables(dsn);
 		});
 	}
 });

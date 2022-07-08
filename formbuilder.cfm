@@ -15,7 +15,7 @@
                 -- AND TABLE_ROWS >=0
                 ORDER BY TABLE_NAME
             ",
-            tsql: " 
+            mssql: " 
                 DECLARE @sql nvarchar(MAX)
 
                 SELECT
@@ -35,7 +35,7 @@
                 "
         }
 
-       local.tables = queryExecute(local.SQL.tsql, { }, {  datasource = session.datasourcename, result = "r.tables" } );
+       local.tables = queryExecute(local.SQL.mssql, { }, {  datasource = session.datasourcename, result = "r.tables" } );
        return local.tables;
     }
     
@@ -59,12 +59,14 @@
     <script src="//cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.min.js" integrity="sha384-j0CNLUeiqtyaRmlzUHCPZ+Gy5fQu0dQ6eZ/xAww941Ai1SxSY+0EQqNXNE6DZiVc" crossorigin="anonymous"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-    --->
+
     <script src="//polyfill.io/v3/polyfill.min.js?features=es2015%2CIntersectionObserver" crossorigin="anonymous"></script> <!--- Polyfill is a service which accepts a request for a set of browser features and returns only the polyfills that are needed by the requesting browser. --->
     <script src="/vendor/vue/2.6.14/vue.js"></script>
     <script src="/vendor/axios/0.25.0/axios.min.js"></script>
     <script src="/vendor/vue/vue-router/3.5.3/vue-router.js"></script>
     <script src="/vendor/vue/bootstrap-vue/2.21.2/bootstrap-vue.min.js"></script>
+    --->
+
     <script src="/vendor/vue/bootstrap-vue/2.21.2/bootstrap-vue-icons.min.js"></script> 
     <script src="/vendor/sortable/1.8.4/Sortable.min.js"></script>
     <script src="/vendor/vue/vue-draggable/2.20.0/vuedraggable.umd.min.js"></script>
@@ -93,8 +95,6 @@
     </style>
 </cfsavecontent> 
 
-<div id="app">
-
 
 
     <nav aria-label="breadcrumb">
@@ -106,38 +106,13 @@
 
     <section class="container">
         <h1>Webform Builder</h1>
-        <div class="row">
-            <div class="col-md-12" id="leftcol">
-                <p><strong>Notice:</strong> This tool is unfinished and has been published as it may still be useful in its current state. Use your web browser's developer tools to copy the generated source code for now. <strong>All planned features are not yet implemented</strong>. </p>
+        <div class="col-md-12" id="leftcol">
+            <p><strong>Notice:</strong> This tool is unfinished and has been published as it may still be useful in its current state. Use your web browser's developer tools to copy the generated source code for now. <strong>All planned features are not yet implemented</strong>. </p>
 
-                <p><strong>How to use</strong>: Click on a table name from the "DATABASE TABLES" select box to populate the chained "COLUMNS" select box below. The generated field name & ids will match the database table column names. 
-                     Double click on a column to generate a formfield to the page. Form field attributes (labels, input type, name, id, maxlength, required, etc.. ) will be auto generated utilizing the table comlun's properties. You can re-order the form items by drag and drop.</p>
-
-
-            </div>
-            <div class="col-md-3" id="leftcol">
-                <label><i calss="fa fa-table"></i> Database Tables</label>
-                <select class="select-table form-control" id="select-table"  @change="getTableDef(table_name)" v-model="table_name" multiple>
-                    <cfoutput query="q.dbtables">
-                        <option value="#table_name#">#table_name# <cfif RECORD_COUNT GT 0>(#RECORD_COUNT#)</cfif></option>
-                    </cfoutput>
-                </select>
-                <label> Columns ({{ this.table_name[0] }})</label>
-                <select class="form-control" id="table-def"  @dblclick="addField(column_name)" v-model="column_name" multiple>
-                    <option v-for="r in table_columns"  v-bind:value="r.COLUMN_NAME"  v-bind:column_props="JSON.stringify(r)"> {{ r.COLUMN_NAME }}</option>
-                </select>
-            </div>
-            <div class="col-md-9">
-
-                    <div id="form_canvas">
-                        <draggable v-model="form_canvas" ghost-class="ghost" :sort="true" @end="onEnd" class="row">
-                            <div v-for="item in form_canvas" v-html="item.innerHTML" class="form-group col-md-6 draggable" @dblclick="showEditForm(item,$event)"></div>
-                        </draggable>
-                    </div>
-                
-            </div>
+            <p><strong>How to use</strong>: Click on a table name from the "DATABASE TABLES" select box to populate the chained "COLUMNS" select box below. The generated field name & ids will match the database table column names. 
+            Double click on a column to generate a formfield to the page. Form field attributes (labels, input type, name, id, maxlength, required, etc.. ) will be auto generated utilizing the table comlun's properties. You can re-order the form items by drag and drop.</p>
         </div>
-
+        <form-builder></form-builder>
     </section>
 
 
@@ -154,7 +129,6 @@
 
 
     <a onclick="topFunction()" id="myBtn" class="scroll-to-top hidden-mobile visible pe-no-print" href="#" ><i class="fa fa-chevron-up"></i></a>
-</div>
 
 
 <cfsavecontent variable ="request.foot">
