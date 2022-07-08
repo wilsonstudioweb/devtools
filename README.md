@@ -1,6 +1,9 @@
 # devtools
-Coldfusion / Vue.js based Database Tool
 
+I'm in the middle of converting previous jQuery tools over to VUE.js solution for practice as I learn more about vue.js. This is an active code sample that may not be fully functionable in certain parts. But it's mostly functional. I do know that I've yet to address the form builder located on the main index.cfm. Hopefully, I'll get to that soon. Currently focused on the DB Tool. 
+
+
+Coldfusion / Vue.js Based Developer and Database Tool
 
 View and print data definitions and properties of database tables, table specific CFML code generators, and more.
 
