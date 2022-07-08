@@ -6,12 +6,17 @@ Vue.component('tables-datagrid', {
 
 		<h3>Database Tables</h3>
 
+
         <p class="pe-no-print">Click on a table name below to view its data definition and properties used to form the table.</p>
-		<div id="filters">
-			<button@click="getTables(this.dsn)" class="btn btn-secondary btn-sm">All Tables</button>
-	  		<button v-for="L in pjArray" @click="getTables(this.dsn,L)" class="btn btn-secondary btn-sm">{{ L }}</button>
+		<div class="row">
+			<div id="filters" class="col-md-9">
+				<button@click="getTables(this.dsn)" class="btn btn-secondary btn-sm">All Tables</button>
+				<button v-for="L in pjArray" @click="getTables(this.dsn,L)" class="btn btn-secondary btn-sm">{{ L }}</button>
+			</div>			
+			<div calss="col-md-3">
+			
+			</div>
 		</div>
-<div>
 
     <b-tabs pills>
 
@@ -101,18 +106,7 @@ Vue.component('tables-datagrid', {
 
 		</b-table>
 		
-		<div class="row">
-			<b-pagination
-				v-model="currentPage"
-				aria-controls="table-tables"
-				hide-goto-end-buttons 			
-				:total-rows="rows"
-				:per-page="perPage"
-				limit="20"
-				pills 
-			>
-			</b-pagination>
-		</div>
+
 	  </b-tab>
     </b-tabs>
 
@@ -193,6 +187,7 @@ Vue.component('tables-datagrid', {
 			var queryString = Object.keys(params).map((key) => key + '=' + params[key]).join('&');
 			axios.get('/cfcs/dbtool.cfc?' + queryString).then((r) => {
 				this.items = r.data;
+				this.pjArray = this.filterAlpha(r.data);
 			});
 
 

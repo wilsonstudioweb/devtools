@@ -33,7 +33,6 @@ Vue.component('gencfml-builder', {
 	},
 	methods: {
 		sqlFormat: function(code){
-			console.log(code);
 			return (code)? window.sqlFormatter.format(code) : '';
 
 		}, 
@@ -66,7 +65,6 @@ Vue.component('gencfml-builder', {
 			}
 		},
 		fullScreen: function(elem){
-			console.log('executed');
 		   this.fsElem = document.fullscreenElement;
 		   // If no element is in full-screen
 		   if(this.fsElem !== null) {
@@ -100,7 +98,6 @@ Vue.component('gencfml-builder', {
 				})
 				.then((r) => {
 					this.sourcecode = r.data;
-					console.log(this.sourcecode);
 				});
 		}
 	},

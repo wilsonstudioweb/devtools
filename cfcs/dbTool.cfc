@@ -3,7 +3,9 @@ component
 	// if(Listfind(session.deptlist, application.adminsDepartment.development) lt 1) { writeOutput('Permission Denied: Restricted to Developer Access Only'); exit; }
 	//session.datasourcename = (isDefined('arguments.dsn'))? arguments.dsn:application.dsn;
 
-	request.blacklist = ['exclude_tables','Personally_Identifiable_Information','etc'];
+	request.blacklist = ['exclude_tables','Personally_Identifiable_Information','etc']; /* array of tale names to ignore, hide, restrict */
+	request.PIIColumns = ['username','user_name','user_pass','userpass','pass','password','ssn','ccnumber','ccnum','ccno','cccode','credit_card','user_name_alias']; /* Array of generic column names to restrict data display */
+	
 	request.dbtype = 'MSSQL';
 	if(request.dbtype is 'MSSQL') { request.table_schema = ''; }
 	session.datasourcename = (isDefined('session.datasourcename'))? session.datasourcename : serverDSNs()[1];
@@ -19,13 +21,13 @@ component
 		} 
 	}
 
+ 	remote function serverDSNs() { return CreateObject("java", "coldfusion.server.ServiceFactory").DataSourceService.getNames(); }
+
 	remote function setDSN() {
 		session.datasourcename = (isDefined('arguments.dsn') AND len(arguments.dsn) AND arguments.dsn neq 'null' AND arguments.dsn neq 'undefined')? arguments.dsn : serverDSNs()[1];
 		cfcookie(name = 'dsn', value = session.datasourcename);
 		return { success:1, message:'Datasource set to #session.datasourcename#.' }
 	}
-
- 	remote function serverDSNs() { return CreateObject("java", "coldfusion.server.ServiceFactory").DataSourceService.getNames(); }
 
  	remote function cfserverInfo() { return session.dbservice.version(); }
 
@@ -221,7 +223,6 @@ component
 
 
 	remote any function table_list(table){
-		// init();
         tables_blacklist = 'cc_info,cc_trans,cc_trans_dev,cc_info_20160808';
 		rs1 = session.dbService.Tables();
 		q.filtered = new Query();
@@ -246,7 +247,6 @@ component
 		return result;
 	}	
 
-
 	remote any function primarykey_list(table){
 		R = table_primarykeys(table=arguments.table);
 		return ValueList(R.COLUMN_NAME);
@@ -263,55 +263,47 @@ component
 		return result;
 	}
 
-
-
 	remote any function records(required string table, numeric currentPage='1', numeric perPage='40', numeric spaceCamelCase = 0 ){
-        try {
-			local.PIIColumns = ['username','user_name','user_pass','userpass','pass','password','ssn','ccnumber','ccnum','ccno','cccode','credit_card','user_name_alias']; /* Array of generic column names to restrict data display */
-			requestBody = toString( getHttpRequestData().content )
-			arguments = deserializeJSON( requestBody );
+		requestBody = toString( getHttpRequestData().content )
+		arguments = deserializeJSON( requestBody );
 
-			local.totalRecords = table_rowcount(table).record_count;
-			local.totalPages =  ceiling(local.totalRecords / arguments.perPage);
-			local.startRow = ceiling(((arguments.currentPage * arguments.perPage) - arguments.perPage));
-			local.endRow = ceiling(arguments.currentPage * arguments.perPage);
-            local.tabledesign = session.dbService.Columns(table=arguments.table)
-			local.primarykeys = table_primarykeys(table=arguments.table);
-			local.selectColumns = [];
-			for (r in queryToArray(local.tabledesign)) {
-				ArrayAppend(local.selectColumns,(arrayFind(local.PIIColumns,r.column_name))? "'PII Restricted' AS #r.column_name#":"#r.column_name#");
-			}
+		local.totalRecords = table_rowcount(table).record_count;
+		local.totalPages =  ceiling(local.totalRecords / arguments.perPage);
+		local.startRow = ceiling(((arguments.currentPage * arguments.perPage) - arguments.perPage));
+		local.endRow = ceiling(arguments.currentPage * arguments.perPage);
+		local.tabledesign = session.dbService.Columns(table=arguments.table)
+		local.primarykeys = table_primarykeys(table=arguments.table);
+		local.selectColumns = [];
+		for (r in queryToArray(local.tabledesign)) {
+			ArrayAppend(local.selectColumns,(arrayFind(request.PIIColumns,r.column_name))? "'PII Restricted' AS #r.column_name#":"#r.column_name#");
+		}
 
-			sql = {
-				mysql: " SELECT #ArrayToList(local.selectColumns)# FROM #arguments.table# ORDER BY #( isDefined('arguments.sort_by')? arguments.sort_by : (local.primarykeys.recordcount GTE 1) ? local.primarykeys.getRow(1).COLUMN_NAME : local.tabledesign.COLUMN_NAME[1] )# #arguments.sort_dir# LIMIT #local.startRow#, #local.endRow#",
-				mssql: " SELECT #ArrayToList(local.selectColumns)# FROM #arguments.table# ORDER BY #( isDefined('arguments.sort_by')? arguments.sort_by : (local.primarykeys.recordcount GTE 1) ? local.primarykeys.getRow(1).COLUMN_NAME : local.tabledesign.COLUMN_NAME[1] )# #arguments.sort_dir# OFFSET #local.startRow# ROWS FETCH NEXT #local.endRow# ROWS ONLY "
-			}
+		sql = {
+			mysql: " SELECT #ArrayToList(local.selectColumns)# FROM #arguments.table# ORDER BY #( isDefined('arguments.sort_by')? arguments.sort_by : (local.primarykeys.recordcount GTE 1) ? local.primarykeys.getRow(1).COLUMN_NAME : local.tabledesign.COLUMN_NAME[1] )# #arguments.sort_dir# LIMIT #local.startRow#, #local.endRow#",
+			mssql: " SELECT #ArrayToList(local.selectColumns)# FROM #arguments.table# ORDER BY #( isDefined('arguments.sort_by')? arguments.sort_by : (local.primarykeys.recordcount GTE 1) ? local.primarykeys.getRow(1).COLUMN_NAME : local.tabledesign.COLUMN_NAME[1] )# #arguments.sort_dir# OFFSET #local.startRow# ROWS FETCH NEXT #local.endRow# ROWS ONLY "
+		}
 
-			qObj = queryExecute(sql.mssql, {}, { datasource=session.datasourcename });
-			
-			local.columns = [];
-			for (r in queryToArray(local.tabledesign)) {
-				ArrayAppend(local.columns, { key: '#UCASE(r.column_name)#', label: (spaceCamelCase is 1)? '#camelToSpace(r.column_name,1)#':'#r.column_name#', sortable: 'true', data_type: '#r.type_name#', column_size:'#r.column_size#' });
-			}
-			
-			return { 
-				success: true,
-				total_records: local.totalRecords, 
-				total_pages: local.totalPages, 
-				perPage:arguments.perPage, 
-				currentPage:arguments.currentPage,  
-				start_row: local.startRow, 
-				end_row: local.endRow,
-				next_row: local.endRow+1, 
-					fields:local.columns, 
-					items: qObj, 
-					filters: (isDefined('arguments.filters'))? this.filters : []
-			}
-				
-        } catch (any e) {
-            writeDump(e); abort;
-            rethrow; //CF9+
-        }
+		qObj = queryExecute(sql.mssql, {}, { datasource=session.datasourcename });
+		
+		local.columns = [];
+		for (r in queryToArray(local.tabledesign)) {
+			ArrayAppend(local.columns, { key: '#UCASE(r.column_name)#', label: (spaceCamelCase is 1)? '#camelToSpace(r.column_name,1)#':'#r.column_name#', sortable: 'true', data_type: '#r.type_name#', column_size:'#r.column_size#' });
+		}
+		
+		return { 
+			success: true,
+			total_records: local.totalRecords, 
+			total_pages: local.totalPages, 
+			perPage:arguments.perPage, 
+			currentPage:arguments.currentPage,  
+			start_row: local.startRow, 
+			end_row: local.endRow,
+			next_row: local.endRow+1, 
+				fields:local.columns, 
+				items: qObj, 
+				filters: (isDefined('arguments.filters'))? this.filters : []
+		}
+		
 	}
 
 	remote any function calcPagination(required query qObj, required numeric currentPage, required numeric perPage, required numeric totalRecords){
@@ -336,8 +328,8 @@ component
 				start_row: local.startRow, 
 				end_row: local.endRow,
 				next_row: local.endRow+1, 
-					fields:local.columns, 
-					items: qObj 
+				fields:local.columns, 
+				items: qObj 
 			}
 		} catch (any e) {
 			return { "success": false,"message": e.message };
@@ -474,7 +466,7 @@ component
 	}
 
 
-	remote any function table_rowcount(required string table, string schema = 'db1091448_probateleads'){
+	remote any function table_rowcount(required string table){
 		q = new Query(); q.setdatasource(session.datasourcename);
 		switch(request.dbtype) {
 			case "MySQL":
@@ -609,15 +601,15 @@ component
 	
 	public string function tHead(required q, primary_keys){
 		try{
-				if(isArray(q)){
-					writeOutput('<thead><tr>'); 
-					for(column_name in structKeyList(q[1])){ writeOutput('<th>#rereplace(column_name,'_',' ','all')#</th>'); }
-					writeOutput('</tr></thead>');
-				} else { writeOutput('<thead></thead>'); }
-        	} catch (any e) {
-            		writeDump(e); abort;
-            		rethrow; //CF9+
-        	}
+			if(isArray(q)){
+				writeOutput('<thead><tr>'); 
+				for(column_name in structKeyList(q[1])){ writeOutput('<th>#rereplace(column_name,'_',' ','all')#</th>'); }
+				writeOutput('</tr></thead>');
+			} else { writeOutput('<thead></thead>'); }
+		} catch (any e) {
+				writeDump(e); abort;
+				rethrow; //CF9+
+		}
 	}
 
 	public string function tBody(required q, primary_keys){

@@ -102,7 +102,6 @@ Vue.component('db-statsinfo', {
                     queryformat: 'struct'
                 }
 			}).then((r) => {
-                console.log(r.data);
                 this.serverinfo = r.data;
 			});
         },
