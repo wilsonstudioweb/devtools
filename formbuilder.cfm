@@ -91,7 +91,10 @@
             color: rgba(0,0,0,.2);
             display:inline-block;
             margin-left:4px;
+            
         }
+
+        body div.modal { display:block; }
     </style>
 </cfsavecontent> 
 
@@ -133,6 +136,7 @@
 
 <cfsavecontent variable ="request.foot">
     <script src="/js/print_elements.js"></script>
+    <script src="https://unpkg.com/v-switch-case@1.0.2/dist/v-switch.min.js"></script>
     <script src="/js/formbuilder.vue.js?<cfoutput>#CreateUUID()#</cfoutput>"></script>
 </cfsavecontent>
 

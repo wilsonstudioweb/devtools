@@ -1,4 +1,4 @@
-<cfscript> 
+<cfscript>
    // if(!isDefined('session.deptlist')) { location('/'); }
    // if(Listfind(session.deptlist, application.adminsDepartment.development) lt 1) { writeOutput('Permission Denied: Restricted to Developer Access Only'); exit; }
 </cfscript>

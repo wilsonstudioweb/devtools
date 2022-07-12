@@ -1,4 +1,5 @@
 
+Vue.use(VSwitch);
 
 Vue.component('form-builder', {
 	require: null,
@@ -16,11 +17,52 @@ Vue.component('form-builder', {
                 </div>
                 <div class="col-md-9">
 					<div id="form_canvas">
-						<draggable v-model="form_canvas" ghost-class="ghost" :sort="true" @end="onEnd" class="row">
-							<div v-for="item in form_canvas" v-html="item.innerHTML" class="form-group col-md-6 draggable" @dblclick=""></div>
+						<draggable  v-model="form_canvas" ghost-class="ghost" :sort="true" @end="onEnd" class="row">
+						
+							<div v-for="(field, index) in formFields" class="form-group col-md-6 "  @dblclick="showEditForm(index)">
+								<label v-if="field.label" :for="formFields[index].label.for" :class="formFields[index].label.className">{{ formFields[index].label.textlabel }}</label>
+								<input v-if="field.input" :type="field.input.type" :v-model="field.input.name" :id="field.input.id" :field="field" :value="field.input.value" :placeholder="field.input.placeholder" :minLength="field.input.minLength" :maxLength="field.input.maxLength" :pattern="field.input.pattern" :class="field.input.className" :readonly="field.input.readOnly">
+							
+								<select v-if="field.select" :type="field.select" :v-model="field.input.name" :id="field.input.id" :class="field.input.className" :readonly="field.input.readOnly">
+
+								</select>
+							
+							</div>
+
 						</draggable>
 					</div>
                 </div>
+				
+
+				<div v-show="this.editorVisible" class="modal" tabindex="-1" role="dialog" style="z-index:99999;">
+				<div class="modal-dialog modal-xl" role="document">
+				  <div class="modal-content">
+					<div class="modal-header">
+					  <h5 class="modal-title">Edit Properties</h5>
+					  <button type="button" class="btn btn-sm" data-dismiss="modal" aria-label="Close" @click="closeProp"><i class="fa fa-times"></i></button>
+					</div>
+					<div class="modal-body">
+					  
+						<div v-for="(obj, objkey, objindex) in formFields[editRow]">
+						
+							<h5>{{objkey}}</h5>
+							<div v-for="(value, key, index) in obj" class="form-group row">
+								<label class="col-sm-4 col-form-label col-form-label-sm">{{ spaceCamelCase(key) }}</label>
+								<div v-switch="key" class="col-sm-8">
+									<select v-case="'type'" class="form-control form-control-sm" v-model="formFields[editRow][objkey][key]">
+										<option v-for="input_type in editor.input_types" :value="input_type">{{input_type}}</option>
+									</select>
+									<input v-default type="text" class="form-control form-control-sm" v-model="formFields[editRow][objkey][key]" >
+								</div>
+							</div>
+						</div>
+
+					</div>
+				  </div>
+				</div>
+			  </div>
+
+
             </div>
 	`,
 	data: function() {
@@ -45,10 +87,19 @@ Vue.component('form-builder', {
 				text:	['alt', 'autocomplete', 'name', 'pattern', 'placeholder', 'step', 'defaultValue', 'value', 'validationMessage', 'title', 'id', 'className' ], 
 				select: ['alt', 'autocomplete', 'name', 'pattern', 'placeholder', 'step', 'defaultValue', 'value', 'validationMessage', 'title', 'id', 'className' ],
 				label: 	['alt', 'className' ]
-		  	}
+		  	},
+			formFields:[],
+			editorVisible:false,
+			editRow:null,
+			editor:{
+				input_types: ['button','checkbox','color','date','datetime-local','email','file','hidden','image','month','number','password','radio','range','reset','search','submit','tel','text','time','url','week']
+			}
 		};
 	},
 	methods: {
+		labelProps: function(props){
+			console.log(props);
+		},
 		getTables: function(dsn, filter) {
 			params = {
 				method: 'getTables',
@@ -64,7 +115,14 @@ Vue.component('form-builder', {
 				this.tables = r.data;
 			});
 		},
-		showEditForm(item){
+		closeProp(){
+			this.editorVisible = false;
+		},
+		showEditForm(index){
+			this.editorVisible = true;
+			this.editRow = index;
+
+			
 			/*
 			console.log(item.querySelector('input:first-of-type').attributes.name.value);
 			field = item.querySelector('input:first-of-type').attributes;
@@ -106,34 +164,35 @@ Vue.component('form-builder', {
 			}
 		},
         addField: function(column_name){
+
+			var prop = { for:null, value:null, class:null };
+
             axios.get('cfcs/formbuilder.cfc?table=' + this.table_name + '&column=' + column_name + '&method=columndef&returnformat=json&queryformat=struct').then((r) => {
 				this.column_def = r.data[0];
                 // console.log(this.column_def);
                 var div = document.createElement('div');
                 div.className = 'form-group col-md-6 draggable';
-                var label = this.genLabel(this.column_def);
+
 
 				if(this.column_def.IS_FOREIGNKEY == 'YES') {
 					var input = this.genSelect(this.column_def);
 				} else {
                 	var input = this.genInput(this.column_def);
 				}
-                div.appendChild(label);
-                div.appendChild(input);
-                this.form_canvas.push(div);
-				this.initHandlers();
+
+				this.formFields.push({
+					label: this.genLabel(this.column_def), input
+				});
+
+				// this.initHandlers();
 			});
         },
 		genLabel: function(field) {
-			var label = document.createElement('label');
-			label.htmlFor = field.COLUMN_NAME;
-			label.innerText = this.spaceCamelCase(field.COLUMN_NAME);
-            if(field.IS_NULLABLE !== 'YES') label.className = 'required';
-			if(field.IS_PRIMARYKEY == 'YES') { 
-				label.className = 'primary-key'; 
-			}
-			// return label.outerHTML;
-            return label;
+            return { 
+				for: field.COLUMN_NAME,
+				textlabel: this.spaceCamelCase(field.COLUMN_NAME),
+				className: (field.IS_PRIMARYKEY == 'YES')? 'primary-key': (field.IS_NULLABLE !== 'YES')? 'required' :  null
+			};
 		},
 		genSelect: function(field){
 
@@ -154,13 +213,31 @@ Vue.component('form-builder', {
 			return input;
 		}, 
 		genInput: function(field) {
+			input = {
+					type: null,
+					name:null,
+					id:null,
+					placeholder:null,
+					className:null,
+					minLength:null,
+					maxLength:null,
+					readOnly:null,
+					required:null,
+					pattern:null,
+					/*
+					table:null,
+					bindto:null
+					*/
+				}
 			inst = this;
 			switch (field.TYPE_NAME) {
 				case 'BIT':
-					var input = document.createElement('select');
+					input.type = 'select';
+					// var input = document.createElement('select');
 					break;
 				default:
-					var input = document.createElement('input');
+					input.type = 'input';
+					// var input = document.createElement('input');
 					break;
 			}
 			switch (field.COLUMN_NAME.toUpperCase()) {
@@ -181,8 +258,7 @@ Vue.component('form-builder', {
 				case 'EMAIL':
 				case 'EMAIL2':
 					input.type = 'email';
-					input.pattern =
-						'^(?![.-_])((?![-._][-._])[a-z0-9-._]){0,63}[a-z0-9]@(?![-])((?!--)[a-z0-9-]){0,63}[a-z0-9].(|((?![-])((?!--)[a-z0-9-]){0,63}[a-z0-9].))(|([a-z]{2,14}.))[a-z]{2,14}$';
+					input.pattern = '^(?![.-_])((?![-._][-._])[a-z0-9-._]){0,63}[a-z0-9]@(?![-])((?!--)[a-z0-9-]){0,63}[a-z0-9].(|((?![-])((?!--)[a-z0-9-]){0,63}[a-z0-9].))(|([a-z]{2,14}.))[a-z]{2,14}$';
 					input.autocapitalize = 'off';
 					input.spellcheck = false;
 					input.autocorrect = 'off';
@@ -231,11 +307,6 @@ Vue.component('form-builder', {
 							break;
 					}
 			}
-			if(this.form_type == 'vue') { 
-				input.setAttribute('v-model','form.' + field.COLUMN_NAME);
-			} else {
-				input.name = field.COLUMN_NAME;
-			}
 			input.id = field.COLUMN_NAME;
             input.maxLength = field.COLUMN_SIZE;
             input.required = (field.IS_NULLABLE == 'YES')? false:true;
@@ -271,6 +342,8 @@ Vue.component('form-builder', {
 			// input.setAttribute('v-b-popover.hover.top', 'I am popover directive content!');
 			// input.setAttribute('data-content', this.spaceCamelCase(field.label));
 			return input;
+			// console.log(prop);
+			//return input;
 		},
         onEnd(e) {
             this.oldIndex = e.oldIndex;
