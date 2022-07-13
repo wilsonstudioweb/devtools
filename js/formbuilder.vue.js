@@ -20,7 +20,7 @@ Vue.component('form-builder', {
 						<draggable  v-model="form_canvas" ghost-class="ghost" :sort="true" @end="onEnd" class="row">
 						
 							<div v-for="(field, index) in formFields" class="form-group col-md-6 "  @dblclick="showEditForm(index)">
-								<label v-if="field.label" :for="formFields[index].label.for" :class="formFields[index].label.className">{{ formFields[index].label.textlabel }}</label>
+								<label v-if="field.label" :for="formFields[index].label.for" :class="formFields[index].label.className">{{ formFields[index].label.labelText }}</label>
 								<input v-if="field.input" :type="field.input.type" :v-model="field.input.name" :id="field.input.id" :field="field" :value="field.input.value" :placeholder="field.input.placeholder" :minLength="field.input.minLength" :maxLength="field.input.maxLength" :pattern="field.input.pattern" :class="field.input.className" :readonly="field.input.readOnly">
 							
 								<select v-if="field.select" :type="field.select" :v-model="field.input.name" :id="field.input.id" :class="field.input.className" :readonly="field.input.readOnly">
@@ -45,14 +45,29 @@ Vue.component('form-builder', {
 					  
 						<div v-for="(obj, objkey, objindex) in formFields[editRow]">
 						
-							<h5>{{objkey}}</h5>
-							<div v-for="(value, key, index) in obj" class="form-group row">
-								<label class="col-sm-4 col-form-label col-form-label-sm">{{ spaceCamelCase(key) }}</label>
-								<div v-switch="key" class="col-sm-8">
-									<select v-case="'type'" class="form-control form-control-sm" v-model="formFields[editRow][objkey][key]">
-										<option v-for="input_type in editor.input_types" :value="input_type">{{input_type}}</option>
-									</select>
-									<input v-default type="text" class="form-control form-control-sm" v-model="formFields[editRow][objkey][key]" >
+							<h6 style="margin-top:.5em;">{{objkey.toUpperCase()}}</h6>
+							<div class="row">
+								<div v-for="(value, key, index) in obj" class="form-group col-md-6 row">
+									<label class="col-sm-4 col-form-label col-form-label-sm">{{ spaceCamelCase(key) }}</label>
+									<div v-switch="key.toLowerCase()" class="col-sm-8">
+										<select v-case="'type'" class="form-control form-control-sm" v-model="formFields[editRow][objkey][key]">
+											<option v-for="input_type in editor.input_types" :value="input_type">{{ input_type.toUpperCase() }}</option>
+										</select>
+
+										<label class="switch" v-case="'readonly'">
+											<input type="checkbox" v-model="formFields[editRow][objkey][key]">
+											<span class="slider round"></span>
+										</label>
+
+										<label class="switch" v-case="'required'">
+											<input type="checkbox" v-model="formFields[editRow][objkey][key]">
+											<span class="slider round"></span>
+										</label>
+
+										<input v-case="'minlength'" type="number" class="form-control form-control-sm" v-model="formFields[editRow][objkey][key]" >
+										<input v-case="'maxlength'" type="number" class="form-control form-control-sm" v-model="formFields[editRow][objkey][key]" >
+										<input v-default type="text" class="form-control form-control-sm" v-model="formFields[editRow][objkey][key]" >
+									</div>
 								</div>
 							</div>
 						</div>
@@ -189,8 +204,8 @@ Vue.component('form-builder', {
         },
 		genLabel: function(field) {
             return { 
+				labelText: this.spaceCamelCase(field.COLUMN_NAME),
 				for: field.COLUMN_NAME,
-				textlabel: this.spaceCamelCase(field.COLUMN_NAME),
 				className: (field.IS_PRIMARYKEY == 'YES')? 'primary-key': (field.IS_NULLABLE !== 'YES')? 'required' :  null
 			};
 		},
@@ -218,12 +233,13 @@ Vue.component('form-builder', {
 					name:null,
 					id:null,
 					placeholder:null,
-					className:null,
 					minLength:null,
 					maxLength:null,
+					pattern:null,
+					className:null,				
 					readOnly:null,
 					required:null,
-					pattern:null,
+
 					/*
 					table:null,
 					bindto:null
