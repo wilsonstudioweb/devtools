@@ -275,6 +275,17 @@ html div.col-border {  display:block; min-height:180px !important;  background:#
                 </div>
             </div>
 
+            <div class="col-border col-md-6">
+                <div class="card-body">
+                    <h5 class="card-title">Snippet Code Editor</h5>
+                    <p class="card-text">HTML/CSS/JavaSCript Snippet code editor. Create, edit, save code collections to reference for later use.</p>
+                    <a href="/snippet/" class="btn btn-primary">Go</a>
+                </div>
+            </div>
+
+
+            
+
         </div>
     </div>
     </section>

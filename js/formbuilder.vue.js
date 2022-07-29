@@ -20,11 +20,12 @@ Vue.component('form-builder', {
 						<draggable  v-model="form_canvas" ghost-class="ghost" :sort="true" @end="onEnd" class="row">
 						
 							<div v-for="(field, index) in formFields" class="form-group col-md-6 "  @dblclick="showEditForm(index)">
-								<label v-if="field.label" :for="formFields[index].label.for" :class="formFields[index].label.className">{{ formFields[index].label.labelText }}</label>
-								<input v-if="field.input" :type="field.input.type" :v-model="field.input.name" :id="field.input.id" :field="field" :value="field.input.value" :placeholder="field.input.placeholder" :minLength="field.input.minLength" :maxLength="field.input.maxLength" :pattern="field.input.pattern" :class="field.input.className" :readonly="field.input.readOnly">
-							
-								<select v-if="field.select" :type="field.select" :v-model="field.input.name" :id="field.input.id" :class="field.input.className" :readonly="field.input.readOnly">
-
+								<label v-if="field.label" :for="formFields[index].label.for" :class="formFields[index].label.class">{{ formFields[index].label.labelText }}</label>
+								<input v-if="field.input" :type="field.input.type" :v-model="field.input.name" :id="field.input.id" :field="field" :value="field.input.value" :placeholder="field.input.placeholder" :minLength="field.input.minLength" :maxLength="field.input.maxLength" :pattern="field.input.pattern" :class="field.input.class" :readonly="field.input.readOnly" :required="field.input.required">
+								<textarea v-if="field.textarea" :v-model="field.textarea.name" :id="field.textarea.id" :placeholder="field.textarea.placeholder" :class="field.textarea.class" :readonly="field.textarea.readOnly" :required="field.textarea.required"></textarea>
+								
+								<select v-if="field.select" :v-model="field.select.name" :id="field.select.id" :class="field.select.class" :readonly="field.select.readOnly" :required="field.select.required" @click="genSelectOptions(field.select)">
+									<option v-for="option in field.select.options" :value="option.value">{{ option.text }}</option>
 								</select>
 							
 							</div>
@@ -47,23 +48,20 @@ Vue.component('form-builder', {
 						
 							<h6 style="margin-top:.5em;">{{objkey.toUpperCase()}}</h6>
 							<div class="row">
-								<div v-for="(value, key, index) in obj" class="form-group col-md-6 row">
+								<div v-for="(value, key, index) in obj"  v-if="key !== 'for'" class="form-group col-md-6 row">
 									<label class="col-sm-4 col-form-label col-form-label-sm">{{ spaceCamelCase(key) }}</label>
 									<div v-switch="key.toLowerCase()" class="col-sm-8">
 										<select v-case="'type'" class="form-control form-control-sm" v-model="formFields[editRow][objkey][key]">
-											<option v-for="input_type in editor.input_types" :value="input_type">{{ input_type.toUpperCase() }}</option>
+											<option>Choose</option>
 										</select>
-
 										<label class="switch" v-case="'readonly'">
 											<input type="checkbox" v-model="formFields[editRow][objkey][key]">
 											<span class="slider round"></span>
 										</label>
-
 										<label class="switch" v-case="'required'">
-											<input type="checkbox" v-model="formFields[editRow][objkey][key]">
+											<input type="checkbox" v-model="formFields[editRow][objkey][key]" @click="requiredLabel(formFields[editRow]['label'])">
 											<span class="slider round"></span>
 										</label>
-
 										<input v-case="'minlength'" type="number" class="form-control form-control-sm" v-model="formFields[editRow][objkey][key]" >
 										<input v-case="'maxlength'" type="number" class="form-control form-control-sm" v-model="formFields[editRow][objkey][key]" >
 										<input v-default type="text" class="form-control form-control-sm" v-model="formFields[editRow][objkey][key]" >
@@ -99,9 +97,9 @@ Vue.component('form-builder', {
             oldIndex: "",
             newIndex: "",
 			editAttributes: { 
-				text:	['alt', 'autocomplete', 'name', 'pattern', 'placeholder', 'step', 'defaultValue', 'value', 'validationMessage', 'title', 'id', 'className' ], 
-				select: ['alt', 'autocomplete', 'name', 'pattern', 'placeholder', 'step', 'defaultValue', 'value', 'validationMessage', 'title', 'id', 'className' ],
-				label: 	['alt', 'className' ]
+				text:	['alt', 'autocomplete', 'name', 'pattern', 'placeholder', 'step', 'defaultValue', 'value', 'validationMessage', 'title', 'id', 'class' ], 
+				select: ['alt', 'autocomplete', 'name', 'pattern', 'placeholder', 'step', 'defaultValue', 'value', 'validationMessage', 'title', 'id', 'class' ],
+				label: 	['alt', 'class' ]
 		  	},
 			formFields:[],
 			editorVisible:false,
@@ -114,6 +112,20 @@ Vue.component('form-builder', {
 	methods: {
 		labelProps: function(props){
 			console.log(props);
+		},
+		requiredLabel: function(obj){
+			if(obj.class !== null){
+				classArray = obj.class.split(" "); index = classArray.indexOf("required");
+
+				if(index > -1){
+					classArray.splice(index, 1);
+				} else {
+					classArray.push("required");
+				}
+				obj.class = classArray.join(" ").trim();
+			} else {
+				obj.class = 'required';
+			}
 		},
 		getTables: function(dsn, filter) {
 			params = {
@@ -184,32 +196,98 @@ Vue.component('form-builder', {
 
             axios.get('cfcs/formbuilder.cfc?table=' + this.table_name + '&column=' + column_name + '&method=columndef&returnformat=json&queryformat=struct').then((r) => {
 				this.column_def = r.data[0];
+				objStruct = {}
                 // console.log(this.column_def);
                 var div = document.createElement('div');
                 div.className = 'form-group col-md-6 draggable';
-
-
+				objStruct.label = this.genLabel(this.column_def);
 				if(this.column_def.IS_FOREIGNKEY == 'YES') {
-					var input = this.genSelect(this.column_def);
+					objStruct.select = this.genSelect(this.column_def);
+				} else if( ['varchar(max)','nvarchar(max)'].indexOf(this.column_def.TYPE_NAME.toString()) >= 0 ) {
+					objStruct.textarea = this.genTextArea(this.column_def);
 				} else {
-                	var input = this.genInput(this.column_def);
+                	objStruct.input = this.genInput(this.column_def);
 				}
-
-				this.formFields.push({
-					label: this.genLabel(this.column_def), input
-				});
-
+				this.formFields.push(objStruct);
+				console.log(this.formFields);
 				// this.initHandlers();
 			});
         },
 		genLabel: function(field) {
             return { 
 				labelText: this.spaceCamelCase(field.COLUMN_NAME),
-				for: field.COLUMN_NAME,
-				className: (field.IS_PRIMARYKEY == 'YES')? 'primary-key': (field.IS_NULLABLE !== 'YES')? 'required' :  null
+				for: field.COLUMN_NAME.toLowerCase(),
+				class: (field.IS_PRIMARYKEY == 'YES')? 'primary-key': (field.IS_NULLABLE !== 'YES')? 'required' :  null
 			};
 		},
+		genTextArea: function(field){
+			return { 
+					name: field.COLUMN_NAME.toLowerCase(),
+					'v-model': field.COLUMN_NAME.toLowerCase(),
+					id: field.COLUMN_NAME.toLowerCase(),
+					placeholder: this.spaceCamelCase(field.COLUMN_NAME),
+					minLength:null,
+					maxLength: field.COLUMN_SIZE,
+					pattern:null,
+					class:'form-control',				
+					readOnly:null,
+					required: (field.IS_NULLABLE == 'YES')? false:true
+				/*
+					table:null,
+					bindto:null
+				*/
+
+			}
+		},
+		genSelectOptions: function(field){
+			params = {
+				method: 'records',
+				filters: field.bind.filters,
+				returnformat: 'json',
+				queryformat: 'struct',
+				table: field.bind.table,
+				currentPage: field.bind.currentPage,
+				perPage: field.bind.perPage,
+				sort_by: field.bind.sortBy,
+				sort_dir: field.bind.sortDesc ? 'DESC' : 'ASC',
+				spaceCamelCase: 0
+			};
+			var queryString = Object.keys(params).map((key) => key + '=' + params[key]).join('&');
+			axios
+			.post('/cfcs/dbtool.cfc?' + queryString, JSON.stringify(params),{
+				headers: {
+					'Content-Type': 'application/json;charset=UTF-8',
+					'Access-Control-Allow-Origin': '*'
+				}
+			})
+			.then((r) => {
+				this.field.options = r.data;
+				console.log(this.field.options);			
+			});
+		},
 		genSelect: function(field){
+
+
+
+
+			return {
+				name: field.COLUMN_NAME.toLowerCase(),
+				'v-model': field.COLUMN_NAME.toLowerCase(),
+				id: field.COLUMN_NAME.toLowerCase(),
+				class:'form-control',				
+				readOnly: null,
+				required: (field.IS_NULLABLE == 'YES')? false:true,
+				bind: {
+					table: field.REFERENCED_PRIMARYKEY_TABLE, 
+					key: field.REFERENCED_PRIMARYKEY,
+						filters: null,
+						currentPage: 1,
+						perPage: 100, 
+						sortBy: null, 
+						sortDesc: null
+				},
+				options:[]
+			}
 
 			var input = document.createElement('select');
 			var option = document.createElement('option');
@@ -230,27 +308,32 @@ Vue.component('form-builder', {
 		genInput: function(field) {
 			input = {
 					type: null,
-					name:null,
-					id:null,
-					placeholder:null,
+					name: field.COLUMN_NAME.toLowerCase(),
+					'v-model': field.COLUMN_NAME.toLowerCase(), 
+					id: field.COLUMN_NAME.toLowerCase(),
+					value: null, 
+					placeholder: this.spaceCamelCase(field.COLUMN_NAME),
 					minLength:null,
-					maxLength:null,
+					maxLength: field.COLUMN_SIZE,
 					pattern:null,
-					className:null,				
+					class:'form-control',				
 					readOnly:null,
-					required:null,
+					required: (field.IS_NULLABLE == 'YES')? false:true,
 
 					/*
 					table:null,
 					bindto:null
 					*/
 				}
+
 			inst = this;
 			switch (field.TYPE_NAME) {
 				case 'BIT':
 					input.type = 'select';
 					// var input = document.createElement('select');
 					break;
+					case 'nvarchar(max)': case 'varchar(max)':
+					input.type = 'textarea';
 				default:
 					input.type = 'input';
 					// var input = document.createElement('input');
@@ -327,7 +410,7 @@ Vue.component('form-builder', {
             input.maxLength = field.COLUMN_SIZE;
             input.required = (field.IS_NULLABLE == 'YES')? false:true;
 			input.placeholder = this.spaceCamelCase(field.COLUMN_NAME);
-			input.className = 'form-control';
+			input.class = 'form-control';
 			//input.setAttribute('v-on:click', "this.showEditForm(this)");
 			// input.addEventListener('click', this.$root.showEditForm('wtf'));
             // input.value = '#this.' & field.COLUMN_NAME & '#';
